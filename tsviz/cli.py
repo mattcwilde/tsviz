@@ -6,6 +6,24 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+PALETTE_NAMED = {
+    "off_white": "#FDFDFD",
+    "light_sage_gray": "#DBE0D7",
+    "warm_tan": "#BBA178",
+    "muted_sage_green": "#8C9785",
+    "cool_blue_gray": "#BACCCC",
+    "slate_blue_gray": "#5A6876",
+    "charcoal": "#201C1A",
+}
+
+PALETTE_COLORS = [
+    PALETTE_NAMED["slate_blue_gray"],
+    PALETTE_NAMED["warm_tan"],
+    PALETTE_NAMED["cool_blue_gray"],
+    PALETTE_NAMED["muted_sage_green"],
+    PALETTE_NAMED["light_sage_gray"],
+]
+
 
 def detect_time_column(df):
     """Detect the time series column in the dataframe."""
@@ -74,7 +92,9 @@ def create_plot(df, time_col, value_cols):
     
     has_year = df[time_col].dt.year.notna().any()
     
-    for col in value_cols:
+    for idx, col in enumerate(value_cols):
+        color = PALETTE_COLORS[idx % len(PALETTE_COLORS)]
+        
         hover_template = f"<b>{col}</b><br>"
         hover_template += "Date: %{x|%Y-%m-%d %H:%M:%S}<br>"
         
@@ -93,7 +113,8 @@ def create_plot(df, time_col, value_cols):
             mode='lines',
             name=col,
             customdata=customdata,
-            hovertemplate=hover_template
+            hovertemplate=hover_template,
+            line=dict(color=color, width=2.5)
         ))
     
     fig.update_layout(
@@ -105,9 +126,26 @@ def create_plot(df, time_col, value_cols):
             yanchor="top",
             y=0.99,
             xanchor="left",
-            x=0.01
+            x=0.01,
+            bgcolor=f"rgba(253, 253, 253, 0.8)",
+            bordercolor=PALETTE_NAMED["light_sage_gray"],
+            borderwidth=1
         ),
-        template="plotly_white"
+        plot_bgcolor=PALETTE_NAMED["off_white"],
+        paper_bgcolor=PALETTE_NAMED["off_white"],
+        font=dict(color=PALETTE_NAMED["charcoal"], family="Arial, sans-serif"),
+        xaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor=PALETTE_NAMED["light_sage_gray"],
+            zeroline=False
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor=PALETTE_NAMED["light_sage_gray"],
+            zeroline=False
+        )
     )
     
     return fig
