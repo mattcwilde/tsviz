@@ -1,0 +1,13 @@
+Metadata-Version: 2.2
+Name: tsviz
+Version: 1.0.0
+Summary: Interactive time series visualization CLI tool
+Author: Your Name
+Requires-Python: >=3.7
+Requires-Dist: plotly>=5.0.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: click>=8.0.0
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
