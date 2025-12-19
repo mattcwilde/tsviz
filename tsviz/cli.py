@@ -144,7 +144,8 @@ def create_plot(df, time_col, value_cols):
             showgrid=True,
             gridwidth=1,
             gridcolor=PALETTE_NAMED["light_sage_gray"],
-            zeroline=False
+            zeroline=False,
+            rangemode="tozero"
         )
     )
     
