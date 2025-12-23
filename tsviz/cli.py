@@ -60,12 +60,23 @@ def prepare_data(file_path, columns=None):
     
     time_col = detect_time_column(df)
     
+    # Fallback for headerless single-column CSVs (Xendee curves)
+    if time_col is None and file_path.suffix.lower() == '.csv' and len(df.columns) == 1 and not pd.api.types.is_numeric_dtype(df[df.columns[0]]):
+        df = pd.read_csv(file_path, header=None, names=['value'])
+        time_col = detect_time_column(df)
+    
     if time_col is None:
         if isinstance(df.index, pd.DatetimeIndex):
             df = df.reset_index()
             time_col = df.columns[0]
         else:
-            raise ValueError("No datetime column found in the file")
+            # If only one numeric column and no datetime detected, assume Xendee curve (8760 hourly values)
+            numeric_cols = [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+            if len(numeric_cols) == 1:
+                time_col = 'datetime'
+                df[time_col] = pd.date_range('2027-01-01', periods=len(df), freq='H')
+            else:
+                raise ValueError("No datetime column found in the file")
     
     df[time_col] = pd.to_datetime(df[time_col])
     
