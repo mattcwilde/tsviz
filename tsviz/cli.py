@@ -32,6 +32,9 @@ def detect_time_column(df):
         return datetime_cols[0]
     
     for col in df.columns:
+        # Skip numeric-only columns when detecting time
+        if pd.api.types.is_numeric_dtype(df[col]):
+            continue
         try:
             pd.to_datetime(df[col], errors='raise')
             return col
@@ -60,10 +63,19 @@ def prepare_data(file_path, columns=None):
     
     time_col = detect_time_column(df)
     
-    # Fallback for headerless single-column CSVs (Xendee curves)
-    if time_col is None and file_path.suffix.lower() == '.csv' and len(df.columns) == 1 and not pd.api.types.is_numeric_dtype(df[df.columns[0]]):
-        df = pd.read_csv(file_path, header=None, names=['value'])
-        time_col = detect_time_column(df)
+    # Robust handling for single-column CSVs (Xendee curves)
+    if time_col is None and file_path.suffix.lower() == '.csv' and len(df.columns) == 1:
+        # If the single column appears headerless numeric, re-read without header
+        single_col = df.columns[0]
+        if not pd.api.types.is_numeric_dtype(df[single_col]):
+            df = pd.read_csv(file_path, header=None, names=['value'])
+            single_col = 'value'
+        else:
+            df.rename(columns={single_col: 'value'}, inplace=True)
+            single_col = 'value'
+        df[single_col] = pd.to_numeric(df[single_col], errors='coerce')
+        df['datetime'] = pd.date_range('2027-01-01', periods=len(df), freq='H')
+        time_col = 'datetime'
     
     if time_col is None:
         if isinstance(df.index, pd.DatetimeIndex):
@@ -92,7 +104,10 @@ def prepare_data(file_path, columns=None):
         value_cols = [col for col in value_cols if pd.api.types.is_numeric_dtype(df[col])]
     
     if not value_cols:
-        raise ValueError("No numeric columns found to plot")
+        # Fallback: plot any non-time column (handles single-column Xendee curves)
+        value_cols = [col for col in df.columns if col != time_col]
+        if not value_cols:
+            raise ValueError("No numeric columns found to plot")
     
     return df, time_col, value_cols
 
